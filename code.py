@@ -7,6 +7,14 @@ import nltk
 from nltk.corpus import stopwords
 from wordcloud import WordCloud
 nltk.download('stopwords')
+import tensorflow as tf
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+from sklearn.model_selection import train_test_split
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
+
+import warnings
+warnings.filterwarnings('ignore')
 
 #importing
 data = pd.read_csv("spam_ham_dataset.csv")
@@ -69,3 +77,25 @@ def wordshow(data, typ):
 wordshow(balanced_data[balanced_data['label']=='ham'], typ='Non-Spam')
 wordshow(balanced_data[balanced_data['label']=='spam'], typ='Spam')
 
+train_X, test_X, train_Y, test_Y = train_test_split(
+    balanced_data['text'], balanced_data['label'], test_size=0.2, random_state=42
+)
+
+
+#transforming from text to numbers
+token = Tokenizer()
+token.fit_on_texts(train_X)
+
+train_sequence = token.texts_to_sequences(train_X)
+test_sequence = token.texts_to_sequences(test_X)
+
+#padding to the same length
+max_len=100
+train_sequence=pad_sequences(train_sequence, maxlen=max_len, padding='post', truncating='post')
+test_sequence=pad_sequences(test_sequence, maxlen=max_len, padding='post', truncating='post')
+
+train_Y=(train_Y == 'spam').astype(int)
+test_Y=(test_Y == 'spam').astype(int)
+
+
+#modeling
